@@ -149,7 +149,7 @@ def open_pdf(pdf_path): #opens the pdf in the given path. Works on windows, maco
     elif platform.system() == 'Linux':
         subprocess.run(['xdg-open', pdf_path], check=True)
 
-
+#region Terminal Commands
 def find_papers_by_pdf_name(pdf_name, root_path): # searches for papers by the name of the pdf and returns the dictionaries of the found pdfs
     data = read_json(root_path)
     saved_pdf_names = [pdf['PDF_Name'] for pdf in data]
@@ -213,14 +213,110 @@ def show_find_results(pdf_matches): # in a list of pdf metadata dictionaries it 
         print('   Method:', pdf['Method'])
         print('   Results:', pdf['Results'])
         print('-------------------')
-    #temporalmente. Esto es para ver si funciona el open_pdf
-    command = input('Do you want to open any of the PDFs? (y/n): ')
-    if command == 'y':
-        pdf_number = int(input('Enter the number of the PDF you want to open: '))
-        open_pdf(pdf_matches[pdf_number-1]['PDF_Path'])
     
+def open_pdf_name(pdf_name, root_path): #searches for a pdf by the name of the pdf and opens it
+    pdf_matches = find_papers_by_pdf_name(pdf_name, root_path)
+    pdf_path = pdf_matches[0]['PDF_Path']
+    open_pdf(pdf_path)
 
-#region Terminal Commands
+def open_paper_title(paper_name, root_path): #searches for a pdf by the title of the paper and opens it
+    pdf = find_papers_by_paper_title(paper_name, root_path)
+    pdf_path = pdf['PDF_Path']
+    open_pdf(pdf_path)
+
+def manually_edit_pdf(pdf): #it takes a dictionary with the pdf metadata and lets you edit the info returning the modified info
+    print('What do you want to edit?')
+    print('1. Title')
+    print('2. Authors')
+    print('3. Keywords')
+    print('4. Problem')
+    print('5. Method')
+    print('6. Results')
+    selection = int(input('Enter the number of the parameter you want to edit: '))
+    
+    if selection == 1:
+        print('Current Title:', pdf['Title'])
+        new_title = input('Enter the new title: ')
+        confirmation = input(f'Are you sure you want to change the title to "{new_title}"? (y/n): ')
+        if confirmation == 'y':
+            pdf['Title'] = new_title
+        elif confirmation == 'n':
+            print('Title not changed')
+    if selection == 2:
+        print('Current Authors:', pdf['Authors'])
+        new_authors = input('Enter the new authors: ')
+        confirmation = input(f'Are you sure you want to change the authors to "{new_authors}"? (y/n): ')
+        if confirmation == 'y':
+            pdf['Authors'] = new_authors
+        elif confirmation == 'n':
+            print('Authors not changed')
+    if selection == 3:
+        print('Current Keywords:', pdf['Keywords'])
+        new_keywords = input('Enter the new keywords: ')
+        confirmation = input(f'Are you sure you want to change the keywords to "{new_keywords}"? (y/n): ')
+        if confirmation == 'y':
+            pdf['Keywords'] = new_keywords
+        elif confirmation == 'n':
+            print('Keywords not changed')
+    if selection == 4:
+        print('Current Problem:', pdf['Problem'])
+        new_problem = input('Enter the new problem: ')
+        confirmation = input(f'Are you sure you want to change the problem to "{new_problem}"? (y/n): ')
+        if confirmation == 'y':
+            pdf['Problem'] = new_problem
+        elif confirmation == 'n':
+            print('Problem not changed')
+    if selection == 5:
+        print('Current Method:', pdf['Method'])
+        new_method = input('Enter the new method: ')
+        confirmation = input(f'Are you sure you want to change the method to "{new_method}"? (y/n): ')
+        if confirmation == 'y':
+            pdf['Method'] = new_method
+        elif confirmation == 'n':
+            print('Method not changed')
+    if selection == 6:
+        print('Current Results:', pdf['Results'])
+        new_results = input('Enter the new results: ')
+        confirmation = input(f'Are you sure you want to change the results to "{new_results}"? (y/n): ')
+        if confirmation == 'y':
+            pdf['Results'] = new_results
+        elif confirmation == 'n':
+            print('Results not changed')
+    
+    return pdf
+
+
+def edit_pdf_name(pdf_name, root_path): #searches for a pdf by the name of the pdf and allows to edit it's parameters
+    pdf_matches = find_papers_by_pdf_name(pdf_name, root_path)
+    print('Select which one to edit:')
+    show_find_results(pdf_matches)
+    selection = int(input('Enter the number of the pdf you want to edit: '))
+    pdf = pdf_matches[selection-1]
+    manually_edit_pdf(pdf)
+
+    root_path = os.path.join(root_path, 'data.json')
+
+    with open(root_path, 'w') as file:
+            data = json.load(file)
+            data[selection-1] = pdf
+            json.dump(data, file, indent=4)
+    print("Changes saved")
+
+def edit_paper_title(paper_title, root_path): #searches for a pdf by the title of the paper and allows to edit it's parameters
+    pdf_matches = find_papers_by_paper_title(paper_title, root_path)
+    print('Select which one to edit:')
+    show_find_results(pdf_matches)
+    selection = int(input('Enter the number of the pdf you want to edit: '))
+    pdf = pdf_matches[selection-1]
+    manually_edit_pdf(pdf)
+
+    root_path = os.path.join(root_path, 'data.json')
+
+    with open(root_path, 'w') as file:
+            data = json.load(file)
+            data[selection-1] = pdf
+            json.dump(data, file, indent=4)
+    print("Changes saved")
 
 def manage_terminal_commands(full_command, root_path):
 
@@ -231,42 +327,42 @@ def manage_terminal_commands(full_command, root_path):
         'find_keywords': find_papers_by_keywords,
         'find_mentions': find_papers_by_mentions,
 
-        'open_pdf_name': implement_funcion,
-        'open_paper_title': implement_funcion,
-        'open_current': implement_funcion,
+        'open_pdf_name': open_pdf_name,
+        'open_paper_title': open_paper_title,
 
-        'edit_pdf_name': implement_funcion,
-        'edit_pdf_title': implement_funcion
+        'edit_pdf_name': edit_pdf_name,
+        'edit_paper_title': edit_paper_title
     }
 
-    full_command = full_command.split(" ")
+    full_command = full_command.strip()
+    full_command = full_command.split(":")
     command_name = full_command.pop(0)
     assert command_name in names_of_terminal_commands, 'Unknown Command'
     command = names_of_terminal_commands[command_name]
-    parameters = full_command
+    parameters = full_command[0]
+    parameters = parameters.strip() if parameters else None
 
     #use regular expression to catch if the command starts with find, opne or edit
-    command_name_structure = re.match(r'^\s*([a-zA-Z_]\w*)\_([a-zA-Z_])', command_name)
+    pattern = r'^([a-zA-Z]*)_([a-zA-Z]*(?:_[a-zA-Z]*)*)$'
+    command_name_structure = re.match(pattern, command_name)
     command_sub_name, specific_name = command_name_structure.groups()
     if command_sub_name == 'find':
         if parameters:
             command(parameters, root_path)
+        else:
+            print('You need to enter a parameter to find a paper')
     elif command_sub_name == 'open':
-        if specific_name == 'pdf_name':
-            pdf = find_papers_by_pdf_name(parameters, root_path)[0]
-            pdf_path = pdf['PDF_Path']
-            open_pdf(pdf_path)
-        elif specific_name == 'paper_title':
-            pdf = find_papers_by_paper_title(parameters, root_path)
-            pdf_path = pdf['PDF_Path']
-            open_pdf(pdf_path)
-        elif specific_name == 'current':
-            implement_funcion
+        if parameters:
+            command(parameters, root_path)
+        else:
+            print('You need to enter a parameter to open a paper')
     elif command_sub_name == 'edit':
-        pass
+        if parameters:
+            command(parameters, root_path)
+        else:
+            print('You need to enter a parameter to edit a paper')
     else:
         print("Don't know how but this sub command doesn't exist")
-
 
 #endregion Terminal Commands
 
