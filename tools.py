@@ -11,6 +11,7 @@ import platform
 import subprocess
 import google.generativeai as genai
 import re
+from tqdm import tqdm
 
 def implement_funcion():
     print("la funcion que llamas no esta' implementada")
@@ -47,13 +48,31 @@ def extractTextFromPDF(pdfPath, page_number = 0, all_pages = True): #takes if yo
 
 def process_baic_information(text, pdf_path): #it takes a string with the information and the pdf path to then process the string and return a dictionary with the sorted information
     pdf_name = pdf_path.split('/')[-1]
-    title = text.split('"Title":')[1].split('"Authors":')[0]
-    authors = text.split('"Authors":')[1].split('"Keywords":')[0]
-    keywords = text.split('"Keywords":')[1].split('"Problem":')[0]
-    problem = text.split('"Problem":')[1].split('"Method":')[0]
-    method = text.split('"Method":')[1].split('"Results":')[0]
-    results = text.split('"Results":')[1]
-
+    try:
+        title = text.split('"Title":')[1].split('"Authors":')[0]
+    except:
+        title = 'No title found'
+    try:
+        authors = text.split('"Authors":')[1].split('"Keywords":')[0]
+    except:
+        authors = 'No authors found'
+    try:
+        keywords = text.split('"Keywords":')[1].split('"Problem":')[0]
+    except:
+        keywords = 'No keywords found'
+    try:
+        problem = text.split('"Problem":')[1].split('"Method":')[0]
+    except:
+        problem = 'No problem found'
+    try:
+        method = text.split('"Method":')[1].split('"Results":')[0]
+    except:
+        method = 'No method found'
+    try:
+        results = text.split('"Results":')[1]
+    except:
+        results = 'No results found'
+        
     processed_response = {
         'PDF_Name': pdf_name,
         'PDF_Path': pdf_path,
@@ -74,7 +93,7 @@ def extractBasicInformationFromText(text, pdf_path): #it takes the text and the 
     else:
         genai.configure(api_key=gemini_api_key)
         model = genai.GenerativeModel("gemini-1.5-flash")
-        prompt = 'The following text is from an academic paper. From it extract the title, authors, keywords, the scientific problem they try to solve, the method they use to solve it and the results they obtained. Structure the answer like: "Title":[...] "Authors":[...] "Keywords":[...] "Problem":[...] "Method":[...] "Results":[...]. For each parameter write the answer in plain text with a simple structure. Do not add any extra text. If it is in spanish make the answers in spanish as well. The text is: ' + text
+        prompt = 'The following text is from an academic paper. From it extract the title, authors, keywords, the scientific problem they try to solve, the method they use to solve it and the results they obtained. Structure the answer like: "Title":[...] "Authors":[...] "Keywords":[...] "Problem":[...] "Method":[...] "Results":[...]. For each parameter write the answer in plain text with a simple structure. Do not add any extra text. If it is in spanish make the answers in spanish as well. The text is: [ ' + text + ' ]'
         print('total_tokens:', model.count_tokens(prompt))
         response = model.generate_content(prompt)
         print(response.text)
@@ -117,14 +136,14 @@ def update_json(root_path): # checks if there are new files in the folders and i
         with open(os.path.join(root_path, 'data.json'), 'r') as file:
             data = json.load(file)
         pdfs_in_json = [pdf['PDF_Name'] for pdf in data]
-        for pdf in pdfs:
+        for pdf in tqdm(pdfs):
             if pdf.split('/')[-1] in pdfs_in_json:
                 continue
             else:
                 time.sleep(3) #there's a 15 request per minute limit
                 add_PDF_metadata_to_json(root_path, pdf)
     except:
-        for pdf in pdfs:
+        for pdf in tqdm(pdfs):
             time.sleep(3)
             add_PDF_metadata_to_json(root_path, pdf)
 
@@ -220,8 +239,8 @@ def open_pdf_name(pdf_name, root_path): #searches for a pdf by the name of the p
     open_pdf(pdf_path)
 
 def open_paper_title(paper_name, root_path): #searches for a pdf by the title of the paper and opens it
-    pdf = find_papers_by_paper_title(paper_name, root_path)
-    pdf_path = pdf['PDF_Path']
+    pdf_matches = find_papers_by_paper_title(paper_name, root_path)
+    pdf_path = pdf_matches[0]['PDF_Path']
     open_pdf(pdf_path)
 
 def manually_edit_pdf(pdf): #it takes a dictionary with the pdf metadata and lets you edit the info returning the modified info
@@ -348,7 +367,7 @@ def manage_terminal_commands(full_command, root_path):
     command_sub_name, specific_name = command_name_structure.groups()
     if command_sub_name == 'find':
         if parameters:
-            command(parameters, root_path)
+            show_find_results(command(parameters, root_path))
         else:
             print('You need to enter a parameter to find a paper')
     elif command_sub_name == 'open':
