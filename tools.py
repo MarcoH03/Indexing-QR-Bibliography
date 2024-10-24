@@ -315,8 +315,9 @@ def edit_pdf_name(pdf_name, root_path): #searches for a pdf by the name of the p
 
     root_path = os.path.join(root_path, 'data.json')
 
-    with open(root_path, 'w') as file:
+    with open(root_path, 'r') as file:
             data = json.load(file)
+    with open(root_path, 'w') as file:
             data[selection-1] = pdf
             json.dump(data, file, indent=4)
     print("Changes saved")
@@ -331,8 +332,9 @@ def edit_paper_title(paper_title, root_path): #searches for a pdf by the title o
 
     root_path = os.path.join(root_path, 'data.json')
 
-    with open(root_path, 'w') as file:
+    with open(root_path, 'r') as file:
             data = json.load(file)
+    with open(root_path, 'w') as file:
             data[selection-1] = pdf
             json.dump(data, file, indent=4)
     print("Changes saved")

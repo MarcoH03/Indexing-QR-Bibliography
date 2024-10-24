@@ -7,7 +7,7 @@
 []add tqdm to all useful places
 [] Improve the adding new root paths part in the main.py to make it so that i can add multiple ones without having to close and open the programm again
 [] add a token limiter for the update_json function so that i dont go over a million in under a minute
-[] check hy hen i get an error with the gemini api in the update_json function it blanks the json file
+[] check hy hen i get an error with the gemini api in the update_json function it blanks the json file ---> to fix this i can make a copy of the jon file to work with and only when the programm closes using exit will the olderone update.
 [x] improve the print(command(parameter ...)) part in the manage terminal command funciton hen the command is find...
 
 
