@@ -48,31 +48,13 @@ def extractTextFromPDF(pdfPath, page_number = 0, all_pages = True): #takes if yo
 
 def process_baic_information(text, pdf_path): #it takes a string with the information and the pdf path to then process the string and return a dictionary with the sorted information
     pdf_name = pdf_path.split('/')[-1]
-    try:
-        title = text.split('"Title":')[1].split('"Authors":')[0]
-    except:
-        title = 'No title found'
-    try:
-        authors = text.split('"Authors":')[1].split('"Keywords":')[0]
-    except:
-        authors = 'No authors found'
-    try:
-        keywords = text.split('"Keywords":')[1].split('"Problem":')[0]
-    except:
-        keywords = 'No keywords found'
-    try:
-        problem = text.split('"Problem":')[1].split('"Method":')[0]
-    except:
-        problem = 'No problem found'
-    try:
-        method = text.split('"Method":')[1].split('"Results":')[0]
-    except:
-        method = 'No method found'
-    try:
-        results = text.split('"Results":')[1]
-    except:
-        results = 'No results found'
-        
+    title = text.split('"Title":')[1].split('"Authors":')[0]
+    authors = text.split('"Authors":')[1].split('"Keywords":')[0]
+    keywords = text.split('"Keywords":')[1].split('"Problem":')[0]
+    problem = text.split('"Problem":')[1].split('"Method":')[0]
+    method = text.split('"Method":')[1].split('"Results":')[0]
+    results = text.split('"Results":')[1]
+   
     processed_response = {
         'PDF_Name': pdf_name,
         'PDF_Path': pdf_path,
@@ -92,10 +74,13 @@ def extractBasicInformationFromText(text, pdf_path): #it takes the text and the 
         raise ValueError("API key not found")
     else:
         genai.configure(api_key=gemini_api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        prompt = 'The following text is from an academic paper. From it extract the title, authors, keywords, the scientific problem they try to solve, the method they use to solve it and the results they obtained. Structure the answer like: "Title":[...] "Authors":[...] "Keywords":[...] "Problem":[...] "Method":[...] "Results":[...]. For each parameter write the answer in plain text with a simple structure. Do not add any extra text. If it is in spanish make the answers in spanish as well. The text is: [ ' + text + ' ]'
+        model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction= 'The following text is from an academic paper. From it extract the title, authors, keywords that include phenomena mentioned in the paper and other relevant words, the scientific problem they try to solve, the method they use to solve it and the results they obtained. Be specific. Structure the answer like: "Title": ... "Authors": ... "Keywords": ... "Problem": ... "Method": ... "Results": ... . For each parameter write the answer in plain text with a simple structure. Do not add any extra text. If it is in spanish make the answers in spanish as well.')
+        prompt = 'The text from the academic paper is: [ ' + text + ' ]'
         print('total_tokens:', model.count_tokens(prompt))
         response = model.generate_content(prompt)
+        while '"Title:"' not in response.text and '"Authors:"' not in response.text and '"Keywords:"' not in response.text and '"Problem:"' not in response.text and '"Method:"' not in response.text and '"Results:"' not in response.text:
+            time.sleep(3)
+            response = model.generate_content(prompt)
         print(response.text)
 
         return process_baic_information(response.text, pdf_path)
@@ -339,6 +324,19 @@ def edit_paper_title(paper_title, root_path): #searches for a pdf by the title o
             json.dump(data, file, indent=4)
     print("Changes saved")
 
+def help_command():
+    print('The available commands are:')
+    print('find_pdf_name: Find papers by the name of the pdf')
+    print('find_paper_title: Find papers by the title of the paper')
+    print('find_authors: Find papers by the name of the authors')
+    print('find_keywords: Find papers by the keywords')
+    print('find_mentions: Find papers by the mentions in the text')
+    print('open_pdf_name: Open the pdf given the name of the pdf')
+    print('open_paper_title: Open the pdf given the title of the paper')
+    print('edit_pdf_name: Edit the pdf metadata given the name of the pdf')
+    print('edit_paper_title: Edit the pdf metadata given the title of the paper')
+    print('exit: Exit the program')
+
 def manage_terminal_commands(full_command, root_path):
 
     names_of_terminal_commands = {
@@ -352,38 +350,45 @@ def manage_terminal_commands(full_command, root_path):
         'open_paper_title': open_paper_title,
 
         'edit_pdf_name': edit_pdf_name,
-        'edit_paper_title': edit_paper_title
+        'edit_paper_title': edit_paper_title,
+
+        'help': help_command
     }
 
     full_command = full_command.strip()
-    full_command = full_command.split(":")
-    command_name = full_command.pop(0)
-    assert command_name in names_of_terminal_commands, 'Unknown Command'
-    command = names_of_terminal_commands[command_name]
-    parameters = full_command[0]
-    parameters = parameters.strip() if parameters else None
 
-    #use regular expression to catch if the command starts with find, opne or edit
-    pattern = r'^([a-zA-Z]*)_([a-zA-Z]*(?:_[a-zA-Z]*)*)$'
-    command_name_structure = re.match(pattern, command_name)
-    command_sub_name, specific_name = command_name_structure.groups()
-    if command_sub_name == 'find':
-        if parameters:
-            show_find_results(command(parameters, root_path))
-        else:
-            print('You need to enter a parameter to find a paper')
-    elif command_sub_name == 'open':
-        if parameters:
-            command(parameters, root_path)
-        else:
-            print('You need to enter a parameter to open a paper')
-    elif command_sub_name == 'edit':
-        if parameters:
-            command(parameters, root_path)
-        else:
-            print('You need to enter a parameter to edit a paper')
+    if full_command == 'help':
+        command = names_of_terminal_commands['help']
+        command()
     else:
-        print("Don't know how but this sub command doesn't exist")
+        full_command = full_command.split(":")
+        command_name = full_command.pop(0)
+        assert command_name in names_of_terminal_commands, 'Unknown Command'
+        command = names_of_terminal_commands[command_name]
+        parameters = full_command[0]
+        parameters = parameters.strip() if parameters else None
+
+        #use regular expression to catch if the command starts with find, opne or edit
+        pattern = r'^([a-zA-Z]*)_([a-zA-Z]*(?:_[a-zA-Z]*)*)$'
+        command_name_structure = re.match(pattern, command_name)
+        command_sub_name, specific_name = command_name_structure.groups()
+        if command_sub_name == 'find':
+            if parameters:
+                show_find_results(command(parameters, root_path))
+            else:
+                print('You need to enter a parameter to find a paper')
+        elif command_sub_name == 'open':
+            if parameters:
+                command(parameters, root_path)
+            else:
+                print('You need to enter a parameter to open a paper')
+        elif command_sub_name == 'edit':
+            if parameters:
+                command(parameters, root_path)
+            else:
+                print('You need to enter a parameter to edit a paper')
+        else:
+            print("Don't know how but this sub command doesn't exist")
 
 #endregion Terminal Commands
 

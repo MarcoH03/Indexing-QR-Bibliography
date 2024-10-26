@@ -10,7 +10,7 @@ if __name__ == '__main__':
 
     root_path_key = input('Enter the key for the root path you want to use or newone to add another one: ')
     
-    if root_path_key.strip() == 'newone':
+    while root_path_key.strip() == 'newone':
         root_path = input('Enter the root path you want to use: ')
         rm.add_root_to_dictionary(root_path)
 
@@ -19,10 +19,9 @@ if __name__ == '__main__':
         for root_path_key, root_path in root_path_dictionary.items():
             print(f'{root_path_key} -> {root_path}')
         
-        root_path_key = input('Enter the key for the root path you want to use or newone to add another one: ')
-        root_path = root_path_dictionary[root_path_key]
-    else:
-        root_path = root_path_dictionary[root_path_key]
+        root_path_key = input('Enter the key for the root path you want to use or newone to add another one: ') 
+
+    root_path = root_path_dictionary[root_path_key]
 
     #for testing purposes I will use this root path
     # root_path = '/Users/AdrianMacAir/Desktop/Bibliografía'
@@ -34,7 +33,7 @@ if __name__ == '__main__':
     
     while True:
         #then I prompt the user for the command to execute
-        print('type the command you want to use or "help" to see the available commands. NOTE: help not yet implemented jaja')
+        print('type the command you want to use or "help" to see the available commands: ')
         command = input()
         if command == 'exit':
             break
