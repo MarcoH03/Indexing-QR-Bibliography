@@ -1,4 +1,4 @@
-[] Improve the searching algorithms 
+[] Add searching for frases inside the paper
 [x] Add list of Root Paths that stays saved as a json in the program folder so that at the begining of the program i can select the root i whant to work with or add one. The list most have a description of the folder it would work on.
 [x] write the main.py
 [x] add a help command to tell the user the commands and give descriptions of how to use them
@@ -9,7 +9,8 @@
 [] add a token limiter for the update_json function so that i dont go over a million in under a minute
 [] check why when i get an error with the gemini api in the update_json function it blanks the json file ---> to fix this i can make a copy of the jon file to work with and only when the programm closes using exit will the older one update.
 [x] improve the print(command(parameter ...)) part in the manage terminal command funciton when the command is find...
-
+[x] Add a chat sso that i can ask gemini for clarification on stuff inside an article
+[] Thinking about adding that you can use as context all the pdfs dono
 
 /Users/AdrianMacAir/Library/Mobile Documents/com~apple~CloudDocs/My Files iCloud/Documents/Quantum Rings/Bibliografía
 

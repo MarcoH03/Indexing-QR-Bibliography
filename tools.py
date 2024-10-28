@@ -158,7 +158,7 @@ def find_papers_by_pdf_name(pdf_name, root_path): # searches for papers by the n
     data = read_json(root_path)
     saved_pdf_names = [pdf['PDF_Name'] for pdf in data]
 
-    name_matches = process.extract(pdf_name, saved_pdf_names, scorer=fuzz.token_sort_ratio, limit=3)
+    name_matches = process.extract(pdf_name, saved_pdf_names, scorer=fuzz.WRatio, limit=3)
     pdf_matches = [data[saved_pdf_names.index(match[0])] for match in name_matches]
     
     return pdf_matches
@@ -324,6 +324,47 @@ def edit_paper_title(paper_title, root_path): #searches for a pdf by the title o
             json.dump(data, file, indent=4)
     print("Changes saved")
 
+def chat_with_gemini(context_paper): #it takes a string and uses it a context in a chat with gemini
+    gemini_api_key = os.getenv('GEMINI_API_KEY')
+    genai.configure(api_key=gemini_api_key)
+
+    model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction='You are an online asistent of an undergraduate physics student that helps understanding concepts from academic papers he reads. You are kind, patient but appropiately serious' )
+
+    chat = model.start_chat(
+        history=[
+            {"role": "user", "parts": f"I was reading this article that said: {context_paper}"},
+            {"role": "model", "parts": "Thats interesting. What would you like to know?"},
+        ]
+    )
+    user_question = input('Enter your question: ')
+    while user_question.strip() != 'exit':
+        response = chat.send_message(user_question)
+        print('')
+        print(response.text)
+        user_question = input('Enter your question: ') 
+
+def chat_pdf_name(pdf_name, root_path): #searches for a pdf by the name of the pdf and uses the text of the pdf as context in a chat with gemini
+    pdf_matches = find_papers_by_pdf_name(pdf_name, root_path)
+    print('Select which one to edit:')
+    show_find_results(pdf_matches)
+    selection = int(input('Enter the number of the pdf you want to talk about: '))
+    pdf = pdf_matches[selection-1]
+    print('')
+
+    context_paper = extractTextFromPDF(pdf['PDF_Path'])
+    chat_with_gemini(context_paper)
+
+def chat_paper_title(paper_title, root_path): #searches for a pdf by the title of the paper and uses the text of the pdf as context in a chat with gemini
+    paper_matches = find_papers_by_paper_title(paper_title, root_path) 
+    print('Select which one to edit:')
+    show_find_results(paper_matches)
+    selection = int(input('Enter the number of the paper you want to talk about: '))
+    paper = paper_matches[selection-1]
+    print('')
+
+    context_paper = extractTextFromPDF(paper['PDF_Path'])
+    chat_with_gemini(context_paper)
+
 def help_command():
     print('The available commands are:')
     print('find_pdf_name: Find papers by the name of the pdf')
@@ -335,6 +376,8 @@ def help_command():
     print('open_paper_title: Open the pdf given the title of the paper')
     print('edit_pdf_name: Edit the pdf metadata given the name of the pdf')
     print('edit_paper_title: Edit the pdf metadata given the title of the paper')
+    print('chat_pdf_name: Chat with gemini using the text of the pdf given the name of the pdf')
+    print('chat_paper_title: Chat with gemini using the text of the pdf given the title of the paper')
     print('exit: Exit the program')
 
 def manage_terminal_commands(full_command, root_path):
@@ -351,6 +394,9 @@ def manage_terminal_commands(full_command, root_path):
 
         'edit_pdf_name': edit_pdf_name,
         'edit_paper_title': edit_paper_title,
+
+        'chat_pdf_name': chat_pdf_name,
+        'chat_paper_title': chat_paper_title,
 
         'help': help_command
     }
@@ -387,6 +433,11 @@ def manage_terminal_commands(full_command, root_path):
                 command(parameters, root_path)
             else:
                 print('You need to enter a parameter to edit a paper')
+        elif command_sub_name == 'chat':
+            if parameters:
+                command(parameters, root_path)
+            else:
+                print('You need to enter a parameter to chat about a paper')
         else:
             print("Don't know how but this sub command doesn't exist")
 
