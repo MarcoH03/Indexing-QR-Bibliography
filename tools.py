@@ -83,7 +83,7 @@ def extractBasicInformationFromText(text, pdf_path): #it takes the text and the 
                 time.sleep(3)
                 response = model.generate_content(prompt)
                 if i == 4:
-                    response = 'Title: Not found Authors: Not found Keywords: Not found Problem: Not found Method: Not found Results: Not found'
+                    response = '"Title": Not found "Authors": Not found "Keywords": Not found "Problem": Not found "Method": Not found "Results": Not found'
                     print(response)
                     return process_baic_information(response, pdf_path)
         print(response.text)
