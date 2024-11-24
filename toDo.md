@@ -11,7 +11,4 @@
 [x] improve the print(command(parameter ...)) part in the manage terminal command funciton when the command is find...
 [x] Add a chat sso that i can ask gemini for clarification on stuff inside an article
 [] Thinking about adding that you can use as context all the pdfs dono
-
-/Users/AdrianMacAir/Library/Mobile Documents/com~apple~CloudDocs/My Files iCloud/Documents/Quantum Rings/Bibliografía
-
-/Users/AdrianMacAir/Desktop/Bibliografía
+[] agregar una manera de extraer texto de imagenes escaneadas

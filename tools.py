@@ -78,9 +78,14 @@ def extractBasicInformationFromText(text, pdf_path): #it takes the text and the 
         prompt = 'The text from the academic paper is: [ ' + text + ' ]'
         print('total_tokens:', model.count_tokens(prompt))
         response = model.generate_content(prompt)
-        while '"Title:"' not in response.text and '"Authors:"' not in response.text and '"Keywords:"' not in response.text and '"Problem:"' not in response.text and '"Method:"' not in response.text and '"Results:"' not in response.text:
-            time.sleep(3)
-            response = model.generate_content(prompt)
+        for i in range(5):
+            if '"Title":' not in response.text and '"Authors":' not in response.text and '"Keywords":' not in response.text and '"Problem":' not in response.text and '"Method":' not in response.text and '"Results":' not in response.text:
+                time.sleep(3)
+                response = model.generate_content(prompt)
+                if i == 4:
+                    response = 'Title: Not found Authors: Not found Keywords: Not found Problem: Not found Method: Not found Results: Not found'
+                    print(response)
+                    return process_baic_information(response, pdf_path)
         print(response.text)
 
         return process_baic_information(response.text, pdf_path)
